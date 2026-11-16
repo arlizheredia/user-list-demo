@@ -1,0 +1,5 @@
+# Los tests se ejecutan con Vitest (`bun run test`), que configura jsdom.
+# `bun test` lanza el runner nativo de Bun, que ignora esa configuración y
+# falla con "document is undefined"; este preload lo detiene con un aviso claro.
+[test]
+preload = ["./scripts/bun-test-guard.ts"]
