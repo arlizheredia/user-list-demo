@@ -11,7 +11,7 @@ Pequeña aplicación en **React 19 + TypeScript** que consume la API pública
    persiste los datos, la publicación nueva se añade al principio de la lista en local.
 3. Estados de carga (esqueletos) y de error (con botón «Reintentar») visibles en
    cada petición.
-4. 14 tests con Vitest + Testing Library (unitarios y de integración).
+4. 19 tests con Vitest + Testing Library (unitarios y de integración).
 
 ## Cómo ejecutarlo
 
@@ -48,17 +48,20 @@ publica la app en GitHub Pages (`.github/workflows/deploy.yml`).
 
 ```
 src/
-├── App.tsx                    # Maqueta y estado de nivel superior
+├── App.tsx                    # Maqueta y coordinación de estado
 ├── components/
 │   ├── ui/                    # Componentes shadcn generados (Base UI)
-│   ├── feedback/              # Carga, error con reintento, estado vacío
-│   ├── users/                 # Lista, buscador y fila de usuario
+│   ├── common/                # Piezas reutilizables: UserAvatar, IconText
+│   ├── feedback/              # AsyncContent (carga/error/éxito), esqueletos, error, vacío
+│   ├── users/                 # Lista, buscador, fila y ficha de usuario
 │   └── posts/                 # Panel de detalle, formulario y lista de publicaciones
-├── hooks/use-async.ts         # Hook de carga de datos cancelable
+├── hooks/
+│   ├── use-async.ts           # Carga de datos cancelable
+│   └── use-local-posts.ts     # Publicaciones creadas en la sesión, por usuario
 ├── lib/
 │   ├── schemas.ts             # Esquemas zod → tipos TypeScript
 │   ├── api.ts                 # Cliente HTTP con validación de respuestas
-│   ├── filter-users.ts        # Búsqueda por nombre
+│   ├── filter-users.ts        # Índice y búsqueda por nombre
 │   └── format.ts              # Iniciales para avatares
 └── test/                      # Setup, fixtures y doble de fetch
 ```
@@ -89,11 +92,27 @@ src/
 - **Publicaciones nuevas.** Se hace el `POST` real a la API (para ejercitar el flujo
   y sus errores) y la respuesta se guarda en local. JSONPlaceholder devuelve siempre
   `id: 101`, así que cada publicación local lleva un `localId` (`crypto.randomUUID()`)
-  que se usa como `key`. Se guardan **por usuario en `App`**, de modo que no se
-  pierden al cambiar de usuario y volver.
+  que se usa como `key`. El hook `useLocalPosts` las guarda **por usuario** en un
+  `Map` en `App`, de modo que no se pierden al cambiar de usuario y volver.
 
 - **Búsqueda** insensible a mayúsculas y tildes (`normalize('NFD')`), con
   `useDeferredValue` para que el input no se bloquee si la lista creciera.
+
+- **Reutilización.** El patrón carga/error/éxito vive en un único componente,
+  `AsyncContent`, que reciben tanto la lista de usuarios como la de publicaciones, así
+  que los mensajes y la accesibilidad son idénticos en ambas. `UserAvatar`, `IconText` y
+  `UserProfileCard` eliminan el marcado duplicado.
+
+- **Rendimiento y memoria** (medido, no supuesto):
+  - Los nombres se normalizan **una vez por carga** en un índice (`createUserSearchIndex`)
+    y no en cada pulsación. Con búsqueda vacía se devuelve la misma lista, sin copiarla.
+  - `UserListItem` y `PostItem` usan `memo`. Al cambiar de usuario se renderizan 2 filas
+    (la anterior y la nueva), no todas; al crear una publicación solo se renderiza la nueva.
+  - Para que `memo` funcione, las referencias son estables: `onSelect` es el *setter* de
+    `useState`, `retry` usa `useCallback` y los usuarios sin publicaciones comparten una
+    única lista vacía congelada en vez de crear `[]` en cada render.
+  - No se añadió `memo` donde no aporta (formulario, tarjetas de cabecera): memoizar
+    también cuesta memoria y comparaciones.
 
 - **Accesibilidad.** Regiones `role="status"` durante la carga, `role="alert"` en los
   errores, `aria-pressed` en el usuario seleccionado, etiquetas en todos los campos y
