@@ -34,6 +34,15 @@ export const postsSchema = z.array(postSchema)
 export type User = z.infer<typeof userSchema>
 export type Post = z.infer<typeof postSchema>
 
+/**
+ * Publicación creada en esta sesión. JSONPlaceholder devuelve siempre el
+ * mismo `id` (101), así que añadimos un identificador local para usarlo como
+ * `key` de React y distinguirlas de las que vienen del servidor.
+ */
+export interface LocalPost extends Post {
+  localId: string
+}
+
 /** Longitudes máximas razonables para los campos del formulario. */
 export const TITLE_MAX_LENGTH = 120
 export const BODY_MAX_LENGTH = 2000

@@ -1,16 +1,22 @@
-import { Avatar, AvatarFallback } from '@/components/ui/avatar'
-import { getInitials } from '@/lib/format'
+import { memo } from 'react'
+import { UserAvatar } from '@/components/common/user-avatar'
 import type { User } from '@/lib/schemas'
 import { cn } from '@/lib/utils'
 
 interface UserListItemProps {
   user: User
   selected: boolean
+  /** Debe ser estable (p. ej. un setter de `useState`) para que `memo` sea eficaz. */
   onSelect: (user: User) => void
 }
 
-/** Fila seleccionable de la lista de usuarios. */
-export function UserListItem({ user, selected, onSelect }: UserListItemProps) {
+/**
+ * Fila seleccionable de la lista de usuarios.
+ *
+ * Con `memo`, al cambiar la selección solo se renderizan las dos filas cuyo
+ * `selected` cambia (la anterior y la nueva), no la lista entera.
+ */
+export const UserListItem = memo(function UserListItem({ user, selected, onSelect }: UserListItemProps) {
   return (
     <li>
       <button
@@ -23,9 +29,7 @@ export function UserListItem({ user, selected, onSelect }: UserListItemProps) {
           selected && 'bg-muted',
         )}
       >
-        <Avatar>
-          <AvatarFallback>{getInitials(user.name)}</AvatarFallback>
-        </Avatar>
+        <UserAvatar name={user.name} />
         <span className="flex min-w-0 flex-col">
           <span className="truncate text-sm font-medium">{user.name}</span>
           <span className="truncate text-xs text-muted-foreground">{user.email}</span>
@@ -33,4 +37,4 @@ export function UserListItem({ user, selected, onSelect }: UserListItemProps) {
       </button>
     </li>
   )
-}
+})

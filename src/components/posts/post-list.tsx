@@ -1,22 +1,14 @@
+import { memo } from 'react'
 import { FileText } from 'lucide-react'
 import { EmptyState } from '@/components/feedback/empty-state'
 import { Badge } from '@/components/ui/badge'
-import type { Post } from '@/lib/schemas'
-
-/**
- * Publicación creada en esta sesión. JSONPlaceholder devuelve siempre el
- * mismo `id` (101), así que añadimos un identificador local para usarlo como
- * `key` de React y distinguirlas de las que vienen del servidor.
- */
-export interface LocalPost extends Post {
-  localId: string
-}
+import type { LocalPost, Post } from '@/lib/schemas'
 
 interface PostListProps {
   /** Publicaciones creadas localmente (se muestran primero). */
-  localPosts: LocalPost[]
+  localPosts: readonly LocalPost[]
   /** Publicaciones obtenidas de la API. */
-  remotePosts: Post[]
+  remotePosts: readonly Post[]
 }
 
 /** Lista de publicaciones: primero las nuevas y después las del servidor. */
@@ -37,16 +29,26 @@ export function PostList({ localPosts, remotePosts }: PostListProps) {
   )
 }
 
-function PostItem({ post, isNew = false }: { post: Post; isNew?: boolean }) {
+interface PostItemProps {
+  post: Post
+  isNew?: boolean
+}
+
+/**
+ * Tarjeta de una publicación. Con `memo`, al añadir una publicación nueva solo
+ * se renderiza la tarjeta nueva: las existentes conservan la misma referencia
+ * de `post` y React las omite.
+ */
+const PostItem = memo(function PostItem({ post, isNew = false }: PostItemProps) {
   return (
     <li className="rounded-lg border bg-card p-4">
       <article className="flex flex-col gap-1.5">
         <header className="flex items-start justify-between gap-2">
-          <h3 className="font-medium leading-snug first-letter:uppercase">{post.title}</h3>
+          <h3 className="leading-snug font-medium first-letter:uppercase">{post.title}</h3>
           {isNew && <Badge>Nueva</Badge>}
         </header>
-        <p className="whitespace-pre-line text-sm text-muted-foreground">{post.body}</p>
+        <p className="text-sm whitespace-pre-line text-muted-foreground">{post.body}</p>
       </article>
     </li>
   )
-}
+})

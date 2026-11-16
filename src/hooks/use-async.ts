@@ -1,10 +1,13 @@
-import { useEffect, useState } from 'react'
+import { useCallback, useEffect, useState } from 'react'
 
 /** Estado de una operación asíncrona como unión discriminada. */
 export type AsyncState<T> =
   | { status: 'loading' }
   | { status: 'error'; error: Error }
   | { status: 'success'; data: T }
+
+/** Estado de la petición más la función para reintentarla. */
+export type AsyncResult<T> = AsyncState<T> & { retry: () => void }
 
 /** Función que obtiene datos y admite cancelación. */
 export type Fetcher<T> = (signal: AbortSignal) => Promise<T>
@@ -32,7 +35,7 @@ interface Settled<T> {
  * Importante: `fetcher` debe ser estable (`useCallback`) para no relanzar la
  * petición en cada render.
  */
-export function useAsync<T>(fetcher: Fetcher<T>): AsyncState<T> & { retry: () => void } {
+export function useAsync<T>(fetcher: Fetcher<T>): AsyncResult<T> {
   const [attempt, setAttempt] = useState(0)
   const [settled, setSettled] = useState<Settled<T> | null>(null)
 
@@ -58,5 +61,8 @@ export function useAsync<T>(fetcher: Fetcher<T>): AsyncState<T> & { retry: () =>
   const isCurrent = settled?.fetcher === fetcher && settled.attempt === attempt
   const state: AsyncState<T> = isCurrent ? settled.result : { status: 'loading' }
 
-  return { ...state, retry: () => setAttempt((n) => n + 1) }
+  // Referencia estable: no invalida la memoización de quien la reciba.
+  const retry = useCallback(() => setAttempt((n) => n + 1), [])
+
+  return { ...state, retry }
 }
