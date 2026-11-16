@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest'
 import { users } from '@/test/fixtures'
-import { filterUsersByName } from './filter-users'
+import { createUserSearchIndex, filterUsersByName, searchUsers } from './filter-users'
 
 describe('filterUsersByName', () => {
   it('devuelve todos los usuarios si la búsqueda está vacía o solo tiene espacios', () => {
@@ -19,5 +19,18 @@ describe('filterUsersByName', () => {
 
   it('devuelve una lista vacía si nadie coincide', () => {
     expect(filterUsersByName(users, 'zzz')).toEqual([])
+  })
+})
+
+describe('searchUsers con índice', () => {
+  it('con búsqueda vacía devuelve la misma lista, sin copiarla', () => {
+    const index = createUserSearchIndex(users)
+    expect(searchUsers(index, '')).toBe(users)
+  })
+
+  it('normaliza los nombres una sola vez al crear el índice', () => {
+    const index = createUserSearchIndex(users)
+    expect(index.normalizedNames).toEqual(['leanne graham', 'ervin howell', 'jose perez'])
+    expect(searchUsers(index, 'PÉREZ').map((u) => u.id)).toEqual([3])
   })
 })
