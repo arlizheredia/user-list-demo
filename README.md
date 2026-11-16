@@ -1,5 +1,7 @@
 # Directorio de usuarios
 
+**Demo:** https://arlizheredia.github.io/user-list-demo/
+
 Pequeña aplicación en **React 19 + TypeScript** que consume la API pública
 [JSONPlaceholder](https://jsonplaceholder.typicode.com/users):
 
@@ -24,6 +26,9 @@ bun run lint       # oxlint
 bun run build      # build de producción en dist/ (incluye typecheck)
 bun run preview    # sirve el build
 ```
+
+Cada push a `main` ejecuta lint, tests y build en GitHub Actions y, si todo pasa,
+publica la app en GitHub Pages (`.github/workflows/deploy.yml`).
 
 > Usa `bun run test` (el script de Vitest), no `bun test`, que lanza el runner nativo de Bun.
 

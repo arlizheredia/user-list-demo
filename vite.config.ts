@@ -7,6 +7,9 @@ import { defineConfig } from 'vite'
 // Configuración de Vite (y de Vitest, que reutiliza este mismo fichero).
 // https://vite.dev/config/
 export default defineConfig({
+  // Ruta base del sitio. En GitHub Pages la app vive en /<repositorio>/, así que
+  // el workflow de despliegue define BASE_PATH; en local se sirve desde la raíz.
+  base: process.env.BASE_PATH ?? '/',
   plugins: [react(), tailwindcss()],
   resolve: {
     // Alias "@/..." -> "src/..." para evitar rutas relativas largas.
