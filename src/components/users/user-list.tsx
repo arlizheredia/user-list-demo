@@ -28,6 +28,7 @@ export function UserList({ selectedUserId, onSelect }: UserListProps) {
   // Con `useDeferredValue` el input responde de inmediato aunque filtrar
   // una lista grande fuese costoso; aquí es barato, pero escala bien.
   const deferredQuery = useDeferredValue(query)
+  const visibleUsers = users.status === 'success' ? filterUsersByName(users.data, deferredQuery) : []
 
   return (
     <Card className="lg:sticky lg:top-6">
@@ -37,7 +38,11 @@ export function UserList({ selectedUserId, onSelect }: UserListProps) {
         </CardTitle>
         {users.status === 'success' && (
           <CardAction>
-            <Badge variant="secondary">{users.data.length}</Badge>
+            <Badge variant="secondary" aria-label={`${visibleUsers.length} de ${users.data.length} usuarios`}>
+              {visibleUsers.length === users.data.length
+                ? users.data.length
+                : `${visibleUsers.length} / ${users.data.length}`}
+            </Badge>
           </CardAction>
         )}
       </CardHeader>
@@ -49,7 +54,7 @@ export function UserList({ selectedUserId, onSelect }: UserListProps) {
         )}
         {users.status === 'success' && (
           <FilteredUsers
-            users={filterUsersByName(users.data, deferredQuery)}
+            users={visibleUsers}
             selectedUserId={selectedUserId}
             onSelect={onSelect}
           />
