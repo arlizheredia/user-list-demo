@@ -133,11 +133,34 @@ src/
   el botón atrás.
 - **MSW** en lugar del doble de `fetch`, para reutilizar los mismos *handlers* en tests,
   Storybook y desarrollo sin conexión.
-- **Tests E2E** con Playwright (incluyendo comprobaciones de accesibilidad con axe) y CI
-  en GitHub Actions con lint, typecheck, tests y build.
+- **Tests E2E** con Playwright (incluyendo comprobaciones de accesibilidad con axe),
+  añadidos al workflow de GitHub Actions que ya ejecuta lint, tests y build.
 - **Paginación o virtualización** de publicaciones, edición/borrado de publicaciones y
   persistencia local (`localStorage`) de las creadas.
 - Modo oscuro (las variables de tema de shadcn ya lo soportan) e internacionalización.
+
+### Optimizaciones evaluadas y aplazadas
+
+Las valoré tras el refactor de rendimiento y decidí no aplicarlas todavía: el beneficio es
+real, pero su coste no compensa en una app de este tamaño.
+
+- **`zod/mini` para reducir el bundle.** zod es la dependencia más pesada del bundle
+  (≈372 kB en total, ≈117 kB comprimido). `zod/mini` expone una API funcional que
+  permite al *bundler* eliminar todo lo que no se usa (*tree-shaking*), con un ahorro
+  notable de tamaño.
+  - *Coste:* reescribir los esquemas con otra sintaxis
+    (`z.string().trim().min(1)` pasa a `z.string().check(z.trim(), z.minLength(1))`) y
+    revisar los mensajes de error.
+  - *Cuándo:* si el tiempo de carga en móvil pasara a ser una métrica a vigilar.
+- **React Compiler para memoizar automáticamente.** Analiza los componentes al compilar
+  e inserta por sí mismo el equivalente a `memo`, `useMemo` y `useCallback`. Eliminaría
+  la memoización manual actual (`UserListItem`, `PostItem`, índice de búsqueda, `retry`)
+  y el riesgo de olvidar una dependencia.
+  - *Coste:* con Vite 8 y `@vitejs/plugin-react` 6, que ya no usan Babel, requiere
+    añadir el plugin de Babel del compilador como paso extra. Eso supone más
+    configuración y un build algo más lento.
+  - *Cuándo:* cuando crezca el número de componentes o el plugin oficial lo integre sin
+    configuración adicional. Al activarlo, la memoización manual podría retirarse.
 
 ## Uso de la IA
 
